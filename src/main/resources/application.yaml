@@ -1,0 +1,25 @@
+spring:
+  application:
+    name: plaza
+  threads:
+    virtual:
+      enabled: true
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+  ai:
+    mcp:
+      server:
+        name: plaza-pubsub
+        version: 0.0.1
+        protocol: STREAMABLE
+        type: SYNC
+        annotation-scanner:
+          enabled: true
+
+plaza:
+  pubsub:
+    blocking-pool-size: 500
+    max-timeout-seconds: 60
+    stream-maxlen: 10000
