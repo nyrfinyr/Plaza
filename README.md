@@ -65,6 +65,31 @@ The MCP server is exposed over Streamable HTTP (`spring.ai.mcp.server.protocol: 
 - **Delivery semantics**: at-most-once per subscriber. `receive` acknowledges messages immediately
   after reading them; there is no redelivery/retry.
 
+## Docker
+
+```bash
+docker build -t plaza .
+docker run -p 8080:8080 -v plaza-data:/data plaza
+```
+
+The image bundles both the app and a private Redis instance (multi-stage build: the runtime
+stage installs `redis` from Alpine's package repo alongside the JRE, so the binary is guaranteed
+to match the image's own musl libc — no cross-image binary copy, no compiling from source).
+`docker/entrypoint.sh` starts `redis-server` first, waits for it to accept connections, then runs
+the app in the foreground; on `SIGTERM`/`SIGINT` it stops the app first and shuts Redis down with
+`SAVE` so an orderly `docker stop` doesn't drop in-flight data.
+
+Redis is bound to `127.0.0.1` only (`docker/redis.conf`) — it is never reachable from outside the
+container, so no separate auth is configured on top. Its RDB snapshots live under `/data`; mount a
+volume there (as in the example above) to persist messages across container recreation, or omit
+`-v` for disposable/ephemeral runs.
+
+This bundles Redis into a *single* container, which only supports a single Plaza instance: running
+multiple replicas would give each one its own isolated Redis, breaking pub/sub delivery across
+replicas (a message published on one replica would never reach a subscriber long-polling on
+another). It's the right tradeoff for a single-instance deploy; horizontal scaling would need a
+shared external Redis (Cluster, for multi-key-free workloads like this one) instead of this image.
+
 ## Testing
 
 ```bash
