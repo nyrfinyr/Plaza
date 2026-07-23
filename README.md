@@ -26,6 +26,17 @@ subscribed, with no loss between polls.
 just a tool parameter — the server keeps the read cursor per subscriber in Redis, so nothing needs
 to be tracked client-side.
 
+### Known limitations
+
+- **No channel deletion.** There is no tool (nor an internal method) to remove a channel. Once a
+  channel exists it stays in the `plaza:pubsub:channels` registry set forever, and its stream key
+  (`plaza:pubsub:stream:<channel>`) is only ever capped by `plaza.pubsub.stream-maxlen`, never
+  dropped. Removing one today means manually running `DEL plaza:pubsub:stream:<channel>` and
+  `SREM plaza:pubsub:channels <channel>` against Redis. To implement: an admin-facing
+  `delete_channel` tool (or a TTL/expiry policy) that removes both keys atomically. To
+  investigate/decide before implementing: whether this should be a plain MCP tool (any agent could
+  wipe a channel mid-use) or restricted to an out-of-band admin path.
+
 ## Requirements
 
 - JDK 25 (provisioned automatically by the Gradle toolchain if not already installed locally)

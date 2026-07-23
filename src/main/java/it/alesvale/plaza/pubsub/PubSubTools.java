@@ -30,7 +30,14 @@ class PubSubTools {
             Long-poll for new messages on a channel as a named subscriber. Blocks server-side up to \
             timeoutSeconds waiting for at least one message, then returns (possibly empty if it timed out). \
             Call it again with the same subscriberId to keep listening and pick up only messages you \
-            haven't seen yet.""")
+            haven't seen yet.
+
+            IMPORTANT: the first call with a given subscriberId on a channel registers a new consumer \
+            group anchored at that moment in time (not at the channel's beginning) — any messages \
+            published before this first call will never be delivered to this subscriberId. Always call \
+            receive once (an empty/throwaway call is fine) to register before any message you care about \
+            is published, and reuse the same subscriberId on every subsequent call to keep resuming from \
+            where you left off.""")
     ReceiveResult receive(
             @McpToolParam(description = "Channel name to listen on", required = true)
             String channel,

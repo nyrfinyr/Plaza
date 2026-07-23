@@ -120,8 +120,15 @@ class RedisStreamBus {
     }
 
     private static boolean isBusyGroup(Throwable ex) {
-        String message = ex.getMessage();
-        return message != null && message.contains("BUSYGROUP");
+        Throwable current = ex;
+        while (current != null) {
+            String message = current.getMessage();
+            if (message != null && message.contains("BUSYGROUP")) {
+                return true;
+            }
+            current = current.getCause();
+        }
+        return false;
     }
 
     private static int clamp(int value, int min, int max) {
